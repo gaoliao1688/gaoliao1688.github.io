@@ -1,0 +1,203 @@
+{
+  "as_of": "2026-10-17T23:31:23.976820Z",
+  "mode_note": "bootstrapped from pdpd Obsidian 23Z archives; live panels still animate from anchors",
+  "whale": {
+    "source": "shared_journal via 鲸鱼 2026-10-17T16Z",
+    "as_of": "2026-10-17T16:53:00Z",
+    "rows": [
+      {
+        "k": "进出金窗",
+        "v": "空窗（15:17–16:25Z 核验）",
+        "dir": ""
+      },
+      {
+        "k": "whale_alert",
+        "v": "0",
+        "dir": ""
+      },
+      {
+        "k": "arkham",
+        "v": "0",
+        "dir": ""
+      },
+      {
+        "k": "发现 since_id",
+        "v": "2111294214189539502",
+        "dir": ""
+      },
+      {
+        "k": "本轮新帖",
+        "v": "0 · 静默",
+        "dir": ""
+      }
+    ]
+  },
+  "coinank": {
+    "label": "CoinAnk feed",
+    "source": "Z:\\Obsiaidn\\APEX\\APEX\\Grok-Research\\coinank\\Reports\\20261017T23Z-coinank-7f1e7ab4.md",
+    "as_of": "2026-10-17T23:31:23.976820Z",
+    "report_id": "20261017T23Z-coinank-7f1e7ab4",
+    "analysis_status": "partial",
+    "rows": [
+      {
+        "k": "BTC OI",
+        "v": "94,340.84",
+        "dir": "up"
+      },
+      {
+        "k": "BTC 费率",
+        "v": "4.99e-05",
+        "dir": "up"
+      },
+      {
+        "k": "BTC LSR",
+        "v": "1.744",
+        "dir": ""
+      },
+      {
+        "k": "ETH OI",
+        "v": "2,260,971.37",
+        "dir": "up"
+      },
+      {
+        "k": "ETH 费率",
+        "v": "4.486e-05",
+        "dir": "up"
+      },
+      {
+        "k": "ETH LSR",
+        "v": "3.07",
+        "dir": ""
+      },
+      {
+        "k": "SOL OI",
+        "v": "8,779,086.55",
+        "dir": "up"
+      },
+      {
+        "k": "SOL 费率",
+        "v": "-4.435e-05",
+        "dir": "dn"
+      },
+      {
+        "k": "SOL LSR",
+        "v": "2.586",
+        "dir": ""
+      },
+      {
+        "k": "BNB OI",
+        "v": "563,116.18",
+        "dir": "up"
+      },
+      {
+        "k": "BNB 费率",
+        "v": "0",
+        "dir": ""
+      },
+      {
+        "k": "BNB LSR",
+        "v": "2.51",
+        "dir": ""
+      }
+    ]
+  },
+  "luxalgo": {
+    "source": "Z:\\Obsiaidn\\APEX\\APEX\\Grok-Research\\luxalgo\\Reviews\\luxalgo-eight-four-review-hourly-20261017T23Z\\strategy-scenarios-hourly-20261018T070747+0800.md",
+    "as_of": "2026-10-17T23:00:00Z",
+    "symbols": [
+      "BTC",
+      "ETH",
+      "SOL"
+    ],
+    "rows": [
+      {
+        "k": "trading_ready",
+        "v": "false",
+        "dir": "dn"
+      },
+      {
+        "k": "archive",
+        "v": "20261017T23Z",
+        "dir": ""
+      },
+      {
+        "k": "strategy",
+        "v": "20261018T070747+0800",
+        "dir": ""
+      },
+      {
+        "k": "pane_hint",
+        "v": "见 manifest",
+        "dir": ""
+      },
+      {
+        "k": "model",
+        "v": "model_review: skipped_budget",
+        "dir": ""
+      }
+    ]
+  },
+  "apex": {
+    "source": "APEX Financial Memory Fabric + apex-whale-terminal skill",
+    "as_of": "2026-10-18T00:00:00Z",
+    "rows": [
+      {
+        "k": "Memory Fabric",
+        "v": "G0/P1 只读",
+        "dir": ""
+      },
+      {
+        "k": "truth_plane",
+        "v": "研报/快照唯一",
+        "dir": ""
+      },
+      {
+        "k": "assist",
+        "v": "未批准",
+        "dir": ""
+      },
+      {
+        "k": "joint",
+        "v": "coinank+luxalgo 归档可挂",
+        "dir": ""
+      },
+      {
+        "k": "do_not_overwrite",
+        "v": "true",
+        "dir": ""
+      }
+    ]
+  },
+  "ticker": [
+    {
+      "sym": "BTC",
+      "px": 81519,
+      "chg": 0.034,
+      "note": "archive-anchor"
+    },
+    {
+      "sym": "ETH",
+      "px": 2980,
+      "chg": 0.033,
+      "note": "archive-anchor"
+    },
+    {
+      "sym": "SOL",
+      "px": 142.5,
+      "chg": 0.039,
+      "note": "archive-anchor"
+    },
+    {
+      "sym": "BNB",
+      "px": 610,
+      "chg": 0.005,
+      "note": "archive-anchor"
+    },
+    {
+      "sym": "XRP",
+      "px": 0.54,
+      "chg": 0.032,
+      "note": "archive-anchor"
+    }
+  ]
+}

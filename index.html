@@ -1,0 +1,1396 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>鲸台 · APEX Whale Terminal — 3D Live</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' fill='%230a0a10'/%3E%3Ctext x='16' y='23' font-size='18' text-anchor='middle' fill='%23ff2d78'%3E%E9%B2%B8%3C/text%3E%3C/svg%3E">
+<style>
+:root{
+  --bg:#06060a;--panel:#0b0b11;--line:#ff2d78;--pink:#ff2d78;--pink-l:#ff77ad;
+  --violet:#9b5cff;--green:#00ff9c;--cyan:#35e0ff;--amber:#ffb020;--red:#ff3b57;
+  --text:#e8e8f0;--muted:#717890;
+  --mono:"JetBrains Mono","SFMono-Regular",Menlo,Consolas,"Liberation Mono",ui-monospace,monospace;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:#000;overflow:hidden}
+body{font-family:var(--mono);color:var(--text);-webkit-font-smoothing:antialiased;text-rendering:geometricPrecision}
+.stage{position:fixed;inset:0;display:grid;place-items:center;background:#000;overflow:hidden}
+.app{
+  width:1440px;height:900px;transform-origin:center center;position:relative;
+  display:grid;grid-template-rows:34px 22px 88px 360px 100px 178px;gap:5px;
+  background:var(--bg);overflow:hidden;
+}
+.topbar{
+  display:flex;align-items:center;gap:14px;padding:0 12px;
+  background:linear-gradient(90deg,#ff2d78 0%,#d1379f 42%,#8f3ad0 100%);
+  border-bottom:1px solid #ff6ba4;box-shadow:0 0 22px rgba(255,45,120,.28);
+  font-size:11px;letter-spacing:.1em;
+}
+.brand{font-weight:800;color:#fff;letter-spacing:.1em;display:flex;align-items:center;gap:6px;font-size:12px}
+.brand-mark{color:#ffe3ee}.plus{opacity:.65;font-weight:500}
+.topnav{display:flex;gap:12px;opacity:.72;font-size:9px;letter-spacing:.14em}
+.topnav span{cursor:default}.topnav .on{color:#fff;opacity:1;border-bottom:1px solid rgba(255,255,255,.75);padding-bottom:1px}
+.clock{margin-left:auto;font-weight:700;color:#fff;font-size:10px;letter-spacing:.06em;text-shadow:0 0 8px rgba(255,255,255,.45);text-align:right;line-height:1.25}
+.banner{
+  display:flex;align-items:center;gap:10px;padding:0 10px;
+  background:linear-gradient(90deg,rgba(255,45,120,.18),rgba(53,224,255,.08),rgba(0,255,156,.1));
+  border:1px solid rgba(255,45,120,.35);font-size:9px;letter-spacing:.12em;color:var(--pink-l);
+}
+.banner b{color:#fff}.banner .sim{margin-left:auto;color:var(--amber);font-weight:700}
+.p{position:relative;overflow:hidden;background:linear-gradient(180deg,#0e0e16 0%,#08080e 100%);border:1px solid var(--line);box-shadow:inset 0 0 22px rgba(255,45,120,.07)}
+.p::after{content:"";position:absolute;inset:0;pointer-events:none;background:radial-gradient(130% 100% at 50% 0%,rgba(255,45,120,.09),transparent 62%)}
+.p-title{display:flex;align-items:center;gap:5px;font-size:9px;font-weight:700;letter-spacing:.14em;color:var(--c);padding:3px 6px;border-bottom:1px solid rgba(255,255,255,.055);text-transform:uppercase;position:relative;z-index:2}
+.p-title .ico{width:11px;height:11px;border-radius:2px;background:var(--c);color:#06060a;display:grid;place-items:center;font-size:8px;font-weight:900;letter-spacing:0}
+.p-title b{color:var(--text);font-weight:700;margin-left:2px}
+.p-val{font-size:14px;font-weight:700;color:var(--c);letter-spacing:.01em;padding:1px 6px 0;position:relative;z-index:2;line-height:1.15;text-shadow:0 0 10px color-mix(in srgb,var(--c) 45%,transparent)}
+.p-sub{font-size:8px;color:var(--muted);letter-spacing:.04em;padding:0 6px 3px;position:relative;z-index:2}
+.p-sub .hot{color:var(--c);font-weight:700}
+.p-val.crawl{font-size:11px;display:flex;align-items:center;gap:1px}
+.dots{display:inline-flex;gap:2px}
+.dots i{width:3px;height:3px;border-radius:50%;background:var(--c);animation:blink 1.2s infinite}
+.dots i:nth-child(2){animation-delay:.18s}.dots i:nth-child(3){animation-delay:.36s}
+@keyframes blink{0%,60%,100%{opacity:.25}30%{opacity:1}}
+.status{display:grid;grid-template-columns:1.35fr repeat(6,1fr);gap:4px;height:88px}
+.p-chief{display:flex;flex-direction:column}
+.chief-body{padding:2px 6px;display:flex;flex-direction:column;gap:1px;position:relative;z-index:2;flex:1}
+.chief-line{font-size:8px;color:#b9bed0;letter-spacing:.04em}
+.chief-line.dim{color:var(--muted)}
+.chief-size{display:flex;align-items:center;gap:5px;margin-top:2px}
+.chief-size .lbl{font-size:8px;color:var(--pink);letter-spacing:.12em;font-weight:700}
+.chief-size .bar{flex:1;height:4px;background:#1b1b26;border:1px solid rgba(255,45,120,.35);position:relative;overflow:hidden}
+.chief-size .bar i{position:absolute;inset:0 auto 0 0;background:linear-gradient(90deg,#ff2d78,#ff77ad);box-shadow:0 0 8px rgba(255,45,120,.7)}
+.chief-size .num{font-size:9px;font-weight:700;color:#fff}
+.chief-chips{display:flex;gap:3px;margin-top:auto;flex-wrap:wrap}
+.chief-chips .tag{font-size:7px;letter-spacing:.08em;padding:1px 3px;border:1px solid rgba(255,45,120,.4);color:var(--pink-l);background:rgba(255,45,120,.08)}
+.mid{display:grid;grid-template-columns:1fr 280px;gap:5px;min-height:0}
+.arena{position:relative;background:#05050a;border:1px solid var(--line);overflow:hidden}
+.arena canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.chips{position:absolute;top:6px;right:8px;display:flex;gap:4px;z-index:3}
+.chip{width:22px;height:22px;border-radius:50%;display:grid;place-items:center;font-size:8px;font-weight:800;color:#06060a;background:var(--c);box-shadow:0 0 10px color-mix(in srgb,var(--c) 55%,transparent);position:relative}
+.chip.active{outline:1px solid #fff;outline-offset:1px}
+.chip.active::after{content:"";position:absolute;inset:-5px;border-radius:50%;border:1px solid var(--c);animation:ping 1.8s ease-out infinite}
+@keyframes ping{0%{transform:scale(.8);opacity:.9}100%{transform:scale(1.35);opacity:0}}
+.scanline{position:absolute;left:0;right:0;height:100px;pointer-events:none;z-index:4;background:linear-gradient(180deg,transparent,rgba(255,45,120,.055) 45%,rgba(120,220,255,.05) 60%,transparent);animation:sweep 7.5s linear infinite}
+@keyframes sweep{0%{transform:translateY(-120px)}100%{transform:translateY(380px)}}
+.feeds{display:grid;grid-template-rows:repeat(4,1fr);gap:4px;min-height:0}
+.feed{display:flex;flex-direction:column;min-height:0}
+.feed-body{flex:1;overflow:hidden;padding:3px 6px 2px;font-size:8px;line-height:1.35;letter-spacing:.02em;position:relative;z-index:2;color:#b9bed0}
+.feed-body .row{display:flex;justify-content:space-between;gap:6px;white-space:nowrap}
+.feed-body .row b{color:#fff;font-weight:700}
+.feed-body .up b{color:var(--green)}.feed-body .dn b{color:var(--red)}
+.feed-meta{font-size:7px;color:var(--muted);padding:0 6px 3px;position:relative;z-index:2;letter-spacing:.06em}
+.chiprow{display:flex;gap:3px;flex-wrap:wrap;padding:0 6px 3px;position:relative;z-index:2}
+.schip{font-size:7px;padding:1px 4px;border:1px solid rgba(255,255,255,.12);letter-spacing:.06em;color:var(--muted)}
+.schip.on{color:#06060a;background:var(--green);border-color:var(--green);font-weight:800}
+.schip.warn{color:#06060a;background:var(--amber);border-color:var(--amber);font-weight:800}
+.schip.off{color:var(--red);border-color:rgba(255,59,87,.45)}
+.equity{position:relative}
+.equity canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
+.eq-top{position:absolute;top:3px;left:9px;right:9px;display:flex;gap:10px;align-items:center;font-size:8px;letter-spacing:.14em;z-index:3}
+.eq-lab{color:var(--green);font-weight:700}.eq-ts{color:var(--muted)}
+.eq-val{position:absolute;right:10px;top:14px;z-index:3;font-size:15px;font-weight:800;color:var(--green);text-shadow:0 0 14px rgba(0,255,156,.5)}
+.eq-note{position:absolute;left:9px;bottom:4px;z-index:3;font-size:7.5px;color:var(--amber);letter-spacing:.1em}
+.bottom{display:grid;grid-template-columns:1.2fr 1fr 220px;gap:5px;min-height:0}
+.cycle .tabs{margin-left:auto;display:flex;gap:4px}
+.cycle .tabs span{font-size:7.5px;letter-spacing:.1em;color:var(--muted);padding:1px 4px;border:1px solid rgba(255,255,255,.08)}
+.cycle .tabs .on{color:#06060a;background:var(--pink);border-color:var(--pink);font-weight:700}
+.cycle-body{display:grid;grid-template-columns:1fr 100px;height:calc(100% - 20px)}
+.cycle-body canvas{width:100%;height:100%;display:block}
+.cycle-side{border-left:1px solid rgba(255,45,120,.22);padding:4px 6px;display:flex;flex-direction:column;gap:4px;background:rgba(255,45,120,.03)}
+.cs-row{display:flex;justify-content:space-between;align-items:baseline;font-size:8px;letter-spacing:.1em;color:var(--muted)}
+.cs-row b{font-size:13px;color:var(--cyan);text-shadow:0 0 10px rgba(53,224,255,.45)}
+.cycle-side canvas{height:28px;flex:none}
+.cs-list{display:flex;flex-direction:column;gap:2px;font-size:7.5px;color:#aeb4c6;letter-spacing:.03em;overflow:hidden}
+.cs-list span{display:flex;justify-content:space-between;gap:4px}
+.cs-list b{font-weight:700;color:var(--text)}.cs-list .up b{color:var(--green)}.cs-list .dn b{color:var(--red)}
+.log{display:flex;flex-direction:column}
+.log-body{flex:1;overflow:hidden;padding:3px 7px 2px;font-size:8.5px;line-height:1.5;letter-spacing:.02em;display:flex;flex-direction:column;justify-content:flex-end}
+.log-body .ln{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#c2c7d6;animation:fadein .35s ease}
+.log-body .ln .t{color:#5f657a;margin-right:5px}.log-body .ln .k{font-weight:700;margin-right:4px}
+.log-body .ln.ok .k{color:var(--green)}.log-body .ln.warn .k{color:var(--amber)}
+.log-body .ln.err .k{color:var(--red)}.log-body .ln.info .k{color:var(--cyan)}.log-body .ln.pink .k{color:var(--pink)}
+@keyframes fadein{from{opacity:0;transform:translateY(3px)}to{opacity:1;transform:none}}
+.log-foot{display:flex;align-items:center;gap:8px;padding:3px 7px 5px;border-top:1px solid rgba(255,45,120,.2);background:rgba(255,45,120,.04)}
+.log-status{font-size:7.5px;letter-spacing:.1em;color:var(--muted)}
+.scan-btn{margin-left:auto;font-family:var(--mono);font-size:8px;font-weight:800;letter-spacing:.14em;color:#06060a;background:var(--pink);border:0;padding:3px 11px;cursor:pointer;box-shadow:0 0 14px rgba(255,45,120,.55)}
+.scan-btn:hover{background:#ff5c9e}.scan-btn:active{transform:translateY(1px)}
+.ticker{display:flex;flex-direction:column;min-height:0}
+.ticker-body{flex:1;overflow:hidden;padding:4px 6px;font-size:8px;line-height:1.45;position:relative;z-index:2;color:#aeb4c6}
+.ticker-body .tk{display:flex;gap:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ticker-body .tk .s{color:var(--cyan);font-weight:700;min-width:42px}
+.ticker-body .tk .u{color:var(--green)}.ticker-body .tk .d{color:var(--red)}
+.app::after{content:"";position:absolute;inset:0;pointer-events:none;z-index:20;background:repeating-linear-gradient(180deg,rgba(255,255,255,.025) 0 1px,transparent 1px 3px);mix-blend-mode:overlay}
+@media (prefers-reduced-motion: reduce){
+  .scanline,.chip.active::after,.dots i,.log-body .ln{animation:none!important}
+}
+</style>
+</head>
+<body>
+<div class="stage" id="stage">
+  <div class="app" id="app">
+    <header class="topbar">
+      <div class="brand"><span class="brand-mark">◈</span>鲸台 <span class="plus">·</span> APEX WHALE</div>
+      <nav class="topnav" id="topnav">
+        <span class="on" data-nav="TERMINAL">TERMINAL</span>
+        <span data-nav="RESEARCH">RESEARCH</span>
+        <span data-nav="RUNTIME">RUNTIME</span>
+        <span data-nav="LOGS">LOGS</span>
+      </nav>
+      <div class="clock" id="clock">--:--:-- UTC<br><span style="opacity:.85;font-size:9px">--:--:-- Asia/Shanghai</span></div>
+    </header>
+
+    <div class="banner">
+      <b>四席协同 · 归档锚定+实时刷新 · 研究仿真 · 非实盘</b>
+      <span>Whale · CoinAnk · LuxAlgo · APEX Memory Fabric</span>
+      <span class="sim" id="sim-flag">SIM DEMO · Research only</span>
+    </div>
+
+    <section class="status">
+      <div class="p p-chief" style="--c:var(--pink)">
+        <div class="p-title"><span class="ico">◭</span>CHIEF</div>
+        <div class="chief-body">
+          <div class="chief-line" id="chief-line1">四席协同 · 数据够用</div>
+          <div class="chief-line dim" id="chief-line2">JEV: research_only</div>
+          <div class="chief-size">
+            <span class="lbl">SIZE</span>
+            <span class="bar"><i id="chim-bar" style="width:64%"></i></span>
+            <span class="num" id="chief-size">6.5M</span>
+          </div>
+          <div class="chief-chips">
+            <span class="tag">WHALE</span><span class="tag">COINANK</span><span class="tag">LUX</span><span class="tag">APEX</span>
+          </div>
+        </div>
+      </div>
+      <div class="p" style="--c:var(--green)">
+        <div class="p-title"><span class="ico">◎</span>SCAN</div>
+        <div class="p-val" id="v-scan">8.79</div>
+        <div class="p-sub">targets / cycle</div>
+      </div>
+      <div class="p" style="--c:var(--cyan)">
+        <div class="p-title"><span class="ico">✚</span>VET</div>
+        <div class="p-val" id="v-vet">2.18</div>
+        <div class="p-sub">vitals / pool</div>
+      </div>
+      <div class="p" style="--c:var(--red)">
+        <div class="p-title"><span class="ico">◉</span>FOCAL</div>
+        <div class="p-val" id="v-focal">2.67</div>
+        <div class="p-sub">focus score</div>
+      </div>
+      <div class="p" style="--c:var(--amber)">
+        <div class="p-title"><span class="ico">▲</span>RISK</div>
+        <div class="p-val" id="v-risk">6.44</div>
+        <div class="p-sub"><span class="hot" id="v-risk-sub">67%</span> net exposure</div>
+      </div>
+      <div class="p" style="--c:var(--pink-l)">
+        <div class="p-title"><span class="ico">▤</span>FILES</div>
+        <div class="p-val" id="v-files">1.42M</div>
+        <div class="p-sub"><span class="hot">12+</span> vault hits</div>
+      </div>
+      <div class="p" style="--c:var(--cyan)">
+        <div class="p-title"><span class="ico">⟳</span>CRAWLER</div>
+        <div class="p-val crawl" id="v-crawl">Scanning<span class="dots"><i></i><i></i><i></i></span></div>
+        <div class="p-sub" id="v-crawl-sub">queue 3 · depth 4</div>
+      </div>
+    </section>
+
+    <section class="mid">
+      <div class="arena">
+        <canvas id="c-arena"></canvas>
+        <div class="chips" id="chips">
+          <span class="chip" style="--c:#00ff9c" title="Whale">鲸</span>
+          <span class="chip" style="--c:#35e0ff" title="CoinAnk">CA</span>
+          <span class="chip" style="--c:#ffb020" title="LuxAlgo">LX</span>
+          <span class="chip" style="--c:#ff3b57" title="APEX">AX</span>
+          <span class="chip active" style="--c:#9b5cff" title="CHIEF">CH</span>
+        </div>
+        <div class="scanline" id="scanline"></div>
+      </div>
+      <div class="feeds">
+        <div class="p feed" style="--c:var(--green)">
+          <div class="p-title"><span class="ico">鲸</span>鲸鱼 · WHALE RADAR</div>
+          <div class="feed-body" id="feed-whale"></div>
+          <div class="feed-meta" id="meta-whale">as_of —</div>
+        </div>
+        <div class="p feed" style="--c:var(--cyan)">
+          <div class="p-title"><span class="ico">◈</span>CoinAnk · DERIV</div>
+          <div class="feed-body" id="feed-coinank"></div>
+          <div class="feed-meta" id="meta-coinank">as_of —</div>
+        </div>
+        <div class="p feed" style="--c:var(--violet)">
+          <div class="p-title"><span class="ico">◇</span>LuxAlgo · 八面板</div>
+          <div class="feed-body" id="feed-lux"></div>
+          <div class="chiprow" id="lux-chips"></div>
+          <div class="feed-meta" id="meta-lux">as_of —</div>
+        </div>
+        <div class="p feed" style="--c:var(--pink)">
+          <div class="p-title"><span class="ico">▣</span>APEX · Memory Fabric</div>
+          <div class="feed-body" id="feed-apex"></div>
+          <div class="feed-meta" id="meta-apex">as_of —</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="p equity">
+      <canvas id="c-equity"></canvas>
+      <div class="eq-top"><span class="eq-lab">EQUITY (SIM)</span><span class="eq-ts" id="eq-ts">--:--:--</span></div>
+      <div class="eq-val" id="eq-val">$0.00</div>
+      <div class="eq-note">仿真曲线 · 非实盘账户</div>
+    </section>
+
+    <section class="bottom">
+      <div class="p cycle">
+        <div class="p-title">
+          <span class="ico">◫</span>CYCLE <b id="cyc-n">12</b>
+          <span class="tabs"><span class="on">SPOT</span><span>FLOCK</span><span>JEV</span><span>RISK</span></span>
+        </div>
+        <div class="cycle-body">
+          <canvas id="c-cycle"></canvas>
+          <div class="cycle-side">
+            <div class="cs-row"><span>EXP</span><b id="cs-exp">33.4</b></div>
+            <canvas id="c-spark"></canvas>
+            <div class="cs-list" id="cs-list"></div>
+          </div>
+        </div>
+      </div>
+      <div class="p log">
+        <div class="p-title"><span class="ico">▮</span>RESEARCH.LOG</div>
+        <div class="log-body" id="log-body"></div>
+        <div class="log-foot">
+          <span class="log-status" id="log-status">IDLE · 0 entries</span>
+          <button class="scan-btn" id="scan-btn" type="button">SCAN</button>
+        </div>
+      </div>
+      <div class="p ticker" style="--c:var(--cyan)">
+        <div class="p-title"><span class="ico">〰</span>SIDE TICKER</div>
+        <div class="ticker-body" id="ticker-body"></div>
+      </div>
+    </section>
+  </div>
+</div>
+<script>
+(function(){
+'use strict';
+const TAU = Math.PI * 2;
+const DESIGN_W = 1440, DESIGN_H = 900;
+const C = {
+  pink:'#ff2d78', pinkL:'#ff77ad', violet:'#9b5cff', green:'#00ff9c',
+  cyan:'#35e0ff', amber:'#ffb020', red:'#ff3b57', blue:'#4d7cff',
+  wall:'#07070c', muted:'#5f657a'
+};
+const NODE_COLORS = [C.cyan, C.violet, C.blue];
+const reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+const $ = id => document.getElementById(id);
+
+function createRng(seed){
+  let s = (seed >>> 0) || 1;
+  return function rng(){
+    s ^= s << 13; s >>>= 0;
+    s ^= s >>> 17;
+    s ^= s << 5; s >>>= 0;
+    return s / 4294967296;
+  };
+}
+function pick(rng, arr){ return arr[Math.floor(rng() * arr.length) % arr.length]; }
+function rand(rng, lo, hi){ return lo + rng() * (hi - lo); }
+function clamp(v, lo, hi){ return v < lo ? lo : v > hi ? hi : v; }
+function hexA(hex, a){
+  const h = hex.replace('#','');
+  const n = parseInt(h.length===3 ? h.split('').map(c=>c+c).join('') : h, 16);
+  return `rgba(${(n>>16)&255},${(n>>8)&255},${n&255},${a})`;
+}
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function pad(n){ return String(n).padStart(2,'0'); }
+function fmtUTC(d){ return `${pad(d.getUTCHours())}:${pad(d.getUTCMinutes())}:${pad(d.getUTCSeconds())}`; }
+function fmtSH(d){
+  // Asia/Shanghai = UTC+8
+  const t = new Date(d.getTime() + 8*3600*1000);
+  return `${pad(t.getUTCHours())}:${pad(t.getUTCMinutes())}:${pad(t.getUTCSeconds())}`;
+}
+function fmtMoney(v){
+  return '$' + v.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function fmtAsOf(d){
+  return `${fmtUTC(d)} UTC · ${fmtSH(d)} Asia/Shanghai`;
+}
+
+/* ── market series ─────────────────────────────────────────── */
+function makeCandles(rng, count, start){
+  const out=[]; let price=start, anchor=start;
+  for(let i=0;i<count;i++){
+    const open=price;
+    const close=open+(anchor-open)*0.09+(rng()-0.5)*start*0.03;
+    const high=Math.max(open,close)+start*rng()*0.012;
+    const low=Math.min(open,close)-start*rng()*0.012;
+    out.push({open,close,high,low});
+    price=close; anchor*=1+(rng()-0.5)*0.004;
+  }
+  return out;
+}
+function appendCandle(series, rng){
+  const last=series[series.length-1];
+  const open=last.close;
+  const close=open+(rng()-0.5)*open*0.028;
+  const high=Math.max(open,close)+open*rng()*0.013;
+  const low=Math.min(open,close)-open*rng()*0.013;
+  const c={open,close,high,low}; series.push(c); return c;
+}
+function makeEquity(rng, count, start){
+  const out=[]; let v=start;
+  for(let i=0;i<count;i++){ v+=(rng()-0.44)*start*0.006; out.push(v); }
+  return out;
+}
+function appendEquity(series, rng){
+  const last=series[series.length-1];
+  const next=last+(rng()-0.44)*last*0.007;
+  series.push(next); return next;
+}
+function makeVolumes(rng, count){ const o=[]; for(let i=0;i<count;i++) o.push(rng()); return o; }
+function appendVolume(series, rng){ series.push(rng()); return series[series.length-1]; }
+
+function makeConstellation(rng, count){
+  const nodes=[];
+  for(let i=0;i<count;i++){
+    const hub=i<4;
+    nodes.push({
+      bx: hub ? rand(rng,80,360) : rand(rng,40,920),
+      by: hub ? rand(rng,100,420) : rand(rng,40,620),
+      bz: hub ? rand(rng,0.55,1) : rand(rng,0.15,0.95),
+      ax: rand(rng,3,14), ay: rand(rng,3,12),
+      sp: rand(rng,0.2,0.9), ph: rand(rng,0,TAU),
+      r: hub ? rand(rng,2.6,3.8) : rand(rng,1.0,2.4),
+      hue: hub ? 0 : Math.floor(rng()*3)
+    });
+  }
+  const edges=[];
+  for(let i=0;i<nodes.length;i++){
+    const cand=[];
+    for(let j=0;j<nodes.length;j++){
+      if(i===j) continue;
+      const d=Math.hypot(nodes[i].bx-nodes[j].bx, nodes[i].by-nodes[j].by);
+      if(d<250) cand.push({j,d});
+    }
+    cand.sort((a,b)=>a.d-b.d);
+    const k=2+(rng()<0.5?1:0);
+    for(let n=0;n<Math.min(k,cand.length);n++) edges.push({a:i,b:cand[n].j,w:rng()});
+  }
+  return {nodes, edges};
+}
+
+const SYMS=['BTC','ETH','SOL','BNB','XRP','DOGE','WLD','HYPE','LINK','PEPE','AAVE','SUI'];
+const POOLS=['RAYDIUM','ORCA','METEORA','JUP','BINANCE','BYBIT','OKX'];
+const LOG_TEMPLATES=[
+  {k:'SCAN',c:'info',t:'pool {pool} depth {d}% across {n} venues'},
+  {k:'VET',c:'ok',t:'{sym} liquidity ok, slip est {v}%'},
+  {k:'FOCAL',c:'pink',t:'entry signal {v} confidence on {sym}'},
+  {k:'RISK',c:'warn',t:'exposure {v}% to {sym} — above soft cap'},
+  {k:'CHIEF',c:'ok',t:'四席汇总: {sym} 主观察保持 research_only'},
+  {k:'CRAWL',c:'info',t:'queue {n}, index rebuilt in {v}ms'},
+  {k:'鲸',c:'pink',t:'whale flow {sym}: net {v}M on {pool}'},
+  {k:'COINANK',c:'info',t:'{sym} funding {v}% · OI Δ {n}%'},
+  {k:'LUX',c:'ok',t:'{sym} 八面板: trading_ready=false · 15m {pool}'},
+  {k:'APEX',c:'warn',t:'Memory Fabric: recall {sym} as_of stale {v}m'},
+  {k:'JEV',c:'err',t:'rejected {sym}: stale price feed ({v}ms)'},
+  {k:'EDGE',c:'ok',t:'net edge {v}% sustained over {n} cycles'}
+];
+function makeLogLine(rng, clockText){
+  const tpl=pick(rng, LOG_TEMPLATES);
+  const text=tpl.t
+    .replace('{pool}', pick(rng, POOLS))
+    .replace('{sym}', pick(rng, SYMS))
+    .replace('{n}', String(1+Math.floor(rng()*40)))
+    .replace('{d}', (rng()*40+10).toFixed(0))
+    .replace('{v}', (rng()*90+2).toFixed(1));
+  return {time:clockText, kind:tpl.c, key:tpl.k, text};
+}
+
+/* ── drawing helpers ───────────────────────────────────────── */
+function roundRect(ctx,x,y,w,h,r){
+  const rr=Math.min(r,w*0.5,h*0.5);
+  ctx.beginPath();
+  ctx.moveTo(x+rr,y);
+  ctx.arcTo(x+w,y,x+w,y+h,rr);
+  ctx.arcTo(x+w,y+h,x,y+h,rr);
+  ctx.arcTo(x,y+h,x,y,rr);
+  ctx.arcTo(x,y,x+w,y,rr);
+  ctx.closePath();
+}
+function poly(ctx, pts){
+  ctx.beginPath(); ctx.moveTo(pts[0][0],pts[0][1]);
+  for(let i=1;i<pts.length;i++) ctx.lineTo(pts[i][0],pts[i][1]);
+  ctx.closePath();
+}
+function glowDot(ctx,x,y,r,color,alpha){
+  const g=ctx.createRadialGradient(x,y,0,x,y,r*3.4);
+  g.addColorStop(0,color);
+  g.addColorStop(0.28,hexA(color,alpha*0.55));
+  g.addColorStop(1,hexA(color,0));
+  ctx.fillStyle=g; ctx.beginPath(); ctx.arc(x,y,r*3.4,0,TAU); ctx.fill();
+  ctx.fillStyle=color; ctx.beginPath(); ctx.arc(x,y,r,0,TAU); ctx.fill();
+}
+
+/* ── 3D arena ──────────────────────────────────────────────── */
+function project(x,y,z,w,h,vp,t){
+  const depth = 0.35 + z * 0.75;
+  const px = vp.x + (x - vp.x) * depth + Math.sin(t*0.15)*4*(1-z);
+  const py = vp.y + (y - vp.y) * depth * 0.92;
+  return {x:px, y:py, s:depth, a:0.25+z*0.75};
+}
+
+function drawArena(ctx,w,h,t,m){
+  ctx.clearRect(0,0,w,h);
+  const bg=ctx.createLinearGradient(0,0,0,h);
+  bg.addColorStop(0,'#08080f'); bg.addColorStop(0.5,'#05050a'); bg.addColorStop(1,'#0a0712');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,w,h);
+
+  const horizon=h*0.58;
+  const vp={x:w*0.42, y:horizon-h*0.08};
+
+  // parallax stars / depth fog layers
+  drawParallax(ctx,w,h,t,m);
+  drawFloor3D(ctx,w,h,horizon,vp,t);
+  drawWallCandles(ctx,w,h,t,m);
+  drawConstellation3D(ctx,w,h,t,m,vp);
+  drawDesks(ctx,w,h,t,vp);
+  drawCrystals(ctx,w,h,t);
+  drawRobotFomo(ctx,w,h,t);
+  drawRobotJev(ctx,w,h,t);
+  drawRightColumn(ctx,w,h,t,m);
+  drawVignette(ctx,w,h);
+}
+
+function drawParallax(ctx,w,h,t,m){
+  ctx.save();
+  for(let i=0;i<48;i++){
+    const seed=m.starSeeds[i];
+    const z=seed.z;
+    const x=((seed.x + t*seed.drift*(0.2+z)) % 1) * w;
+    const y=seed.y * h * 0.55;
+    const r=0.4 + z*1.6;
+    ctx.fillStyle=hexA(seed.c, 0.15+z*0.55);
+    ctx.beginPath(); ctx.arc(x,y,r,0,TAU); ctx.fill();
+  }
+  ctx.restore();
+}
+
+function drawFloor3D(ctx,w,h,horizon,vp,t){
+  ctx.save();
+  ctx.strokeStyle='rgba(255,45,120,.08)';
+  ctx.lineWidth=1;
+  const scroll=(t*12)%40;
+  for(let i=1;i<=14;i++){
+    const p=Math.pow(i/14,2.2);
+    const y=horizon+(h-horizon)*p + (scroll*(1-p))*0.15;
+    ctx.globalAlpha=0.2+p*0.8;
+    ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+  }
+  for(let i=-11;i<=11;i++){
+    const x0=vp.x+i*w*0.1;
+    ctx.globalAlpha=0.15+(1-Math.abs(i)/12)*0.55;
+    ctx.beginPath(); ctx.moveTo(vp.x,vp.y); ctx.lineTo(x0,h+10); ctx.stroke();
+  }
+  // vanishing glow
+  const g=ctx.createRadialGradient(vp.x,vp.y,2,vp.x,vp.y,90);
+  g.addColorStop(0,hexA(C.pink,0.22)); g.addColorStop(1,hexA(C.pink,0));
+  ctx.globalAlpha=1; ctx.fillStyle=g; ctx.beginPath(); ctx.arc(vp.x,vp.y,90,0,TAU); ctx.fill();
+  ctx.restore();
+}
+
+function drawWallCandles(ctx,w,h,t,m){
+  const wall={x:w*0.06,y:h*0.05,w:w*0.58,h:h*0.48};
+  const pad={l:24,r:8,t:12,b:14};
+  // extruded panel shadow
+  ctx.save();
+  ctx.fillStyle='rgba(0,0,0,.45)';
+  ctx.fillRect(wall.x+6,wall.y+8,wall.w,wall.h);
+  ctx.fillStyle=C.wall; ctx.fillRect(wall.x,wall.y,wall.w,wall.h);
+  ctx.strokeStyle='rgba(53,224,255,.32)'; ctx.lineWidth=1;
+  ctx.strokeRect(wall.x+0.5,wall.y+0.5,wall.w,wall.h);
+  // side extrusion
+  ctx.fillStyle='rgba(255,45,120,.12)';
+  ctx.beginPath();
+  ctx.moveTo(wall.x+wall.w,wall.y); ctx.lineTo(wall.x+wall.w+8,wall.y+6);
+  ctx.lineTo(wall.x+wall.w+8,wall.y+wall.h+6); ctx.lineTo(wall.x+wall.w,wall.y+wall.h);
+  ctx.closePath(); ctx.fill();
+
+  ctx.strokeStyle='rgba(255,255,255,.035)';
+  for(let i=1;i<5;i++){
+    const y=wall.y+(wall.h*i)/5;
+    ctx.beginPath(); ctx.moveTo(wall.x+pad.l,y); ctx.lineTo(wall.x+wall.w-pad.r,y); ctx.stroke();
+  }
+  const series=m.wallCandles;
+  let hi=-Infinity, lo=Infinity;
+  for(const c of series){ if(c.high>hi)hi=c.high; if(c.low<lo)lo=c.low; }
+  const span=(hi-lo)||1;
+  const plotH=wall.h-pad.t-pad.b, plotW=wall.w-pad.l-pad.r;
+  const cw=plotW/series.length, bodyW=Math.max(1.4,cw*0.56);
+  for(let i=0;i<series.length;i++){
+    const c=series[i];
+    const x=wall.x+pad.l+i*cw+cw*0.5;
+    const yh=wall.y+pad.t+(1-(c.high-lo)/span)*plotH;
+    const yl=wall.y+pad.t+(1-(c.low-lo)/span)*plotH;
+    const yo=wall.y+pad.t+(1-(c.open-lo)/span)*plotH;
+    const yc=wall.y+pad.t+(1-(c.close-lo)/span)*plotH;
+    const up=c.close>=c.open; const col=up?C.green:C.red;
+    ctx.strokeStyle=hexA(col,0.75); ctx.beginPath(); ctx.moveTo(x,yh); ctx.lineTo(x,yl); ctx.stroke();
+    ctx.fillStyle=up?hexA(C.green,0.82):hexA(C.red,0.82);
+    ctx.fillRect(x-bodyW/2,Math.min(yo,yc),bodyW,Math.max(1,Math.abs(yc-yo)));
+  }
+  ctx.fillStyle=C.muted; ctx.font='7px monospace';
+  for(let i=0;i<=3;i++){
+    const p=i/3; const y=wall.y+pad.t+plotH*p;
+    ctx.fillText((hi-span*p).toFixed(4), wall.x+3, y+3);
+  }
+  const chips=[{s:'BTC',x:0.18,c:C.amber},{s:'ETH',x:0.38,c:C.cyan},{s:'SOL',x:0.55,c:C.green},{s:'WLD',x:0.72,c:C.pink}];
+  for(const ch of chips){
+    const x=wall.x+pad.l+plotW*ch.x;
+    const y=wall.y+h*0.12+Math.sin(t*0.9+ch.x*9)*2.2;
+    ctx.fillStyle=hexA(ch.c,0.16); roundRect(ctx,x,y,28,10,2); ctx.fill();
+    ctx.strokeStyle=hexA(ch.c,0.65); roundRect(ctx,x+0.5,y+0.5,28,10,2); ctx.stroke();
+    ctx.fillStyle=ch.c; ctx.font='bold 6.5px monospace'; ctx.fillText(ch.s,x+4,y+7.5);
+  }
+  ctx.restore();
+}
+
+function drawConstellation3D(ctx,w,h,t,m,vp){
+  const {nodes,edges}=m.constellation;
+  const pts=nodes.map(n=>{
+    const bx=(n.bx/1000)*w, by=(n.by/1000)*h;
+    const ox=bx+Math.sin(t*n.sp+n.ph)*n.ax;
+    const oy=by+Math.cos(t*n.sp*0.83+n.ph)*n.ay;
+    return project(ox,oy,n.bz,w,h,vp,t);
+  });
+  ctx.save(); ctx.lineWidth=1;
+  for(let i=0;i<edges.length;i++){
+    const e=edges[i]; const a=pts[e.a], b=pts[e.b];
+    if(!a||!b) continue;
+    const d=Math.hypot(a.x-b.x,a.y-b.y);
+    const al=Math.max(0.04,0.4-d/950)*((a.a+b.a)*0.5);
+    ctx.strokeStyle=hexA(i%3===0?C.violet:C.cyan, al);
+    ctx.beginPath(); ctx.moveTo(a.x,a.y); ctx.lineTo(b.x,b.y); ctx.stroke();
+  }
+  for(let i=0;i<edges.length;i+=6){
+    const e=edges[i]; const a=pts[e.a], b=pts[e.b];
+    if(!a||!b) continue;
+    const u=((t*0.45+e.w*3)%1);
+    glowDot(ctx, a.x+(b.x-a.x)*u, a.y+(b.y-a.y)*u, 1.4, '#fff', 0.8);
+  }
+  // z-sort nodes
+  const order=pts.map((p,i)=>({p,i,z:nodes[i].bz})).sort((a,b)=>a.z-b.z);
+  for(const o of order){
+    const p=o.p, n=nodes[o.i];
+    const col=o.i<4?C.pink:NODE_COLORS[n.hue];
+    glowDot(ctx,p.x,p.y,n.r*p.s,col,0.4+p.a*0.4);
+  }
+  ctx.restore();
+}
+
+function drawDesks(ctx,w,h,t,vp){
+  const seats=[
+    {lab:'鲸', c:C.green, nx:0.18, ny:0.72},
+    {lab:'CA', c:C.cyan, nx:0.38, ny:0.70},
+    {lab:'LX', c:C.violet, nx:0.55, ny:0.72},
+    {lab:'AX', c:C.pink, nx:0.70, ny:0.69},
+    {lab:'SCAN', c:C.amber, nx:0.28, ny:0.84},
+    {lab:'VET', c:C.cyan, nx:0.48, ny:0.86}
+  ];
+  for(let i=0;i<seats.length;i++){
+    const s=seats[i];
+    const z=0.35+i*0.05;
+    const bob=Math.sin(t*1.3+i)*2;
+    const p=project(s.nx*w, s.ny*h+bob, z, w,h,vp,t);
+    const dw=28*p.s, dh=10*p.s;
+    ctx.save();
+    // desk slab extruded
+    ctx.fillStyle='rgba(12,12,20,.9)';
+    ctx.strokeStyle=hexA(s.c,0.7); ctx.lineWidth=1;
+    poly(ctx,[[p.x-dw,p.y],[p.x+dw,p.y],[p.x+dw*0.75,p.y-dh],[p.x-dw*0.75,p.y-dh]]);
+    ctx.fill(); ctx.stroke();
+    ctx.fillStyle=hexA(s.c,0.25);
+    ctx.beginPath(); ctx.ellipse(p.x,p.y-dh*0.4,dw*0.45,dh*0.35,0,0,TAU); ctx.fill();
+    // monitor
+    const mh=14*p.s;
+    ctx.fillStyle='#0a0a12'; ctx.strokeStyle=hexA(s.c,0.8);
+    roundRect(ctx,p.x-10*p.s,p.y-dh-mh,20*p.s,mh,2); ctx.fill(); ctx.stroke();
+    ctx.fillStyle=hexA(s.c,0.35+0.25*Math.sin(t*2+i));
+    roundRect(ctx,p.x-8*p.s,p.y-dh-mh+2,16*p.s,mh-4,1); ctx.fill();
+    // mascot blob
+    ctx.fillStyle=s.c;
+    ctx.beginPath(); ctx.ellipse(p.x+dw*0.35, p.y-dh-2, 4*p.s, 3*p.s, 0,0,TAU); ctx.fill();
+    ctx.fillStyle=hexA(s.c,0.9); ctx.font=`${7*p.s}px monospace`;
+    ctx.fillText(s.lab, p.x-dw*0.55, p.y+10*p.s);
+    ctx.restore();
+  }
+}
+
+function drawCrystals(ctx,w,h,t){
+  const shards=[
+    {x:w*0.22,y:h*0.78,s:1.2,c:C.green,seed:0},
+    {x:w*0.52,y:h*0.74,s:0.95,c:C.red,seed:2.1},
+    {x:w*0.62,y:h*0.80,s:0.7,c:C.cyan,seed:4.3}
+  ];
+  for(const s of shards){
+    const rot=t*0.25+s.seed, bob=Math.sin(t*1.1+s.seed)*2.4, R=18*s.s;
+    ctx.save(); ctx.translate(s.x,s.y+bob);
+    ctx.fillStyle='rgba(0,0,0,.4)'; ctx.beginPath(); ctx.ellipse(0,R*0.7,R*0.8,R*0.2,0,0,TAU); ctx.fill();
+    const facets=[
+      {p:[[0,-R],[R*0.6,-R*0.2],[0,R*0.18],[-R*0.6,-R*0.2]],f:0.95},
+      {p:[[0,-R],[R*0.6,-R*0.2],[0,R*0.7],[-R*0.6,-R*0.2]],f:0.5}
+    ];
+    for(let i=0;i<facets.length;i++){
+      ctx.save(); ctx.rotate(rot*(i===0?1:0.4));
+      poly(ctx,facets[i].p);
+      ctx.fillStyle=hexA(s.c,0.18*facets[i].f); ctx.fill();
+      ctx.strokeStyle=hexA(s.c,0.85*facets[i].f); ctx.stroke();
+      ctx.restore();
+    }
+    ctx.restore();
+  }
+}
+
+function drawRobotFomo(ctx,w,h,t){
+  const x=w*0.07, y=h*0.82, s=0.95, bob=Math.sin(t*1.25)*2.4;
+  ctx.save(); ctx.translate(x,y+bob); ctx.scale(s,s);
+  ctx.fillStyle='rgba(0,0,0,.45)'; ctx.beginPath(); ctx.ellipse(0,4,30,7,0,0,TAU); ctx.fill();
+  const G='rgba(0,255,156,.85)', D='#12121c';
+  ctx.fillStyle=D; ctx.strokeStyle=G; ctx.lineWidth=1.2;
+  roundRect(ctx,-18,-24,12,26,3); ctx.fill(); ctx.stroke();
+  roundRect(ctx,6,-24,12,26,3); ctx.fill(); ctx.stroke();
+  ctx.fillStyle='#0e0e18'; roundRect(ctx,-24,-60,48,38,5); ctx.fill(); ctx.stroke();
+  ctx.fillStyle=hexA(C.green,0.16); roundRect(ctx,-16,-54,32,14,3); ctx.fill();
+  ctx.fillStyle=C.green; ctx.beginPath(); ctx.arc(0,-47,3,0,TAU); ctx.fill();
+  ctx.fillStyle=D; roundRect(ctx,-34,-54,10,30,3); ctx.fill(); ctx.stroke();
+  roundRect(ctx,24,-54,10,30,3); ctx.fill(); ctx.stroke();
+  ctx.fillStyle='#0c0c16'; roundRect(ctx,-18,-90,36,28,5); ctx.fill(); ctx.stroke();
+  ctx.fillStyle=hexA(C.cyan,0.85); roundRect(ctx,-12,-84,24,6,3); ctx.fill();
+  ctx.strokeStyle=G; ctx.beginPath(); ctx.moveTo(0,-90); ctx.lineTo(0,-98); ctx.stroke();
+  ctx.fillStyle=C.pink; ctx.beginPath(); ctx.arc(0,-100,2.4,0,TAU); ctx.fill();
+  ctx.restore();
+  ctx.fillStyle='#fff'; ctx.font='bold 8px monospace'; ctx.fillText('FOMO',x-12,y+16);
+}
+
+function drawRobotJev(ctx,w,h,t){
+  const x=w*0.82, y=h*0.78, s=0.55, bob=Math.sin(t*1.6+1.2)*1.6;
+  ctx.save(); ctx.translate(x,y+bob); ctx.scale(s,s);
+  ctx.fillStyle='rgba(0,0,0,.4)'; ctx.beginPath(); ctx.ellipse(0,3,24,5,0,0,TAU); ctx.fill();
+  const CY='rgba(53,224,255,.8)';
+  ctx.fillStyle='#0d0d16'; ctx.strokeStyle=CY; ctx.lineWidth=1.5;
+  roundRect(ctx,-14,-20,11,22,3); ctx.fill(); ctx.stroke();
+  roundRect(ctx,3,-20,11,22,3); ctx.fill(); ctx.stroke();
+  roundRect(ctx,-18,-46,36,28,5); ctx.fill(); ctx.stroke();
+  ctx.fillStyle=hexA(C.cyan,0.15); roundRect(ctx,-12,-41,24,11,2); ctx.fill();
+  roundRect(ctx,-14,-74,28,26,5); ctx.fill(); ctx.stroke();
+  ctx.fillStyle=hexA(C.cyan,0.9); roundRect(ctx,-10,-68,20,5,2); ctx.fill();
+  ctx.strokeStyle=CY; ctx.beginPath(); ctx.moveTo(0,-74); ctx.lineTo(0,-82); ctx.stroke();
+  ctx.fillStyle=C.pink; ctx.beginPath(); ctx.arc(0,-84,2,0,TAU); ctx.fill();
+  ctx.restore();
+  ctx.fillStyle=C.cyan; ctx.font='bold 7px monospace'; ctx.fillText('JEV',x-8,y+12);
+}
+
+function drawRightColumn(ctx,w,h,t,m){
+  const x=w*0.90;
+  ctx.save(); ctx.translate(x,h*0.22); ctx.scale(1.3,1.3);
+  ctx.fillStyle='rgba(0,0,0,.4)'; ctx.beginPath(); ctx.ellipse(0,36,18,4,0,0,TAU); ctx.fill();
+  ctx.fillStyle='#e9e9f2'; roundRect(ctx,-14,-14,28,26,7); ctx.fill();
+  ctx.fillStyle='#0b0b12'; roundRect(ctx,-9,-7,7,5,2); ctx.fill(); roundRect(ctx,2,-7,7,5,2); ctx.fill();
+  ctx.strokeStyle='#0b0b12'; ctx.lineWidth=1.4; ctx.beginPath(); ctx.moveTo(0,-14); ctx.lineTo(0,-22); ctx.stroke();
+  ctx.fillStyle=C.pink; ctx.beginPath(); ctx.arc(0,-23.5,2,0,TAU); ctx.fill();
+  ctx.fillStyle='#e9e9f2'; roundRect(ctx,-10,14,8,18,3); ctx.fill(); roundRect(ctx,2,14,8,18,3); ctx.fill();
+  ctx.restore();
+  const gy=h*0.55, R=24;
+  ctx.save(); ctx.translate(x,gy);
+  ctx.strokeStyle='rgba(255,255,255,.09)'; ctx.lineWidth=4;
+  ctx.beginPath(); ctx.arc(0,0,R,Math.PI*0.78,Math.PI*2.22); ctx.stroke();
+  const val=m.gauge;
+  ctx.strokeStyle=C.green; ctx.lineWidth=4; ctx.shadowColor=hexA(C.green,0.8); ctx.shadowBlur=10;
+  ctx.beginPath(); ctx.arc(0,0,R,Math.PI*0.78,Math.PI*0.78+Math.PI*1.44*val); ctx.stroke();
+  ctx.shadowBlur=0;
+  const na=Math.PI*0.78+Math.PI*1.44*val;
+  ctx.strokeStyle='#fff'; ctx.lineWidth=1.4;
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(Math.cos(na)*(R-4),Math.sin(na)*(R-4)); ctx.stroke();
+  ctx.fillStyle=C.green; ctx.beginPath(); ctx.arc(0,0,2.4,0,TAU); ctx.fill();
+  ctx.fillStyle='#b9bed0'; ctx.font='7px monospace';
+  ctx.fillText((val*100).toFixed(0)+'%', -8, 38);
+  ctx.restore();
+}
+
+function drawVignette(ctx,w,h){
+  const g=ctx.createRadialGradient(w*0.5,h*0.45,h*0.2,w*0.5,h*0.5,h*0.95);
+  g.addColorStop(0,'rgba(0,0,0,0)'); g.addColorStop(1,'rgba(0,0,0,.55)');
+  ctx.fillStyle=g; ctx.fillRect(0,0,w,h);
+}
+
+function drawEquity(ctx,w,h,t,m){
+  ctx.clearRect(0,0,w,h);
+  const bg=ctx.createLinearGradient(0,0,0,h);
+  bg.addColorStop(0,'#07070d'); bg.addColorStop(1,'#050509');
+  ctx.fillStyle=bg; ctx.fillRect(0,0,w,h);
+  const series=m.equity; if(series.length<2) return;
+  const padL=8,padR=120,padT=18,padB=18;
+  const plotW=w-padL-padR, plotH=h-padT-padB;
+  let hi=-Infinity,lo=Infinity;
+  for(const v of series){ if(v>hi)hi=v; if(v<lo)lo=v; }
+  const span=(hi-lo)||1;
+  const X=i=>padL+(i/(series.length-1))*plotW;
+  const Y=v=>padT+(1-(v-lo)/span)*plotH;
+  ctx.strokeStyle='rgba(255,255,255,.035)';
+  for(let i=1;i<4;i++){ const y=padT+(plotH*i)/4; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(padL+plotW,y); ctx.stroke(); }
+  ctx.beginPath(); ctx.moveTo(X(0),Y(series[0]));
+  for(let i=1;i<series.length;i++) ctx.lineTo(X(i),Y(series[i]));
+  ctx.lineTo(X(series.length-1),padT+plotH); ctx.lineTo(X(0),padT+plotH); ctx.closePath();
+  const fg=ctx.createLinearGradient(0,padT,0,padT+plotH);
+  fg.addColorStop(0,hexA(C.green,0.28)); fg.addColorStop(1,hexA(C.green,0.01));
+  ctx.fillStyle=fg; ctx.fill();
+  ctx.beginPath(); ctx.moveTo(X(0),Y(series[0]));
+  for(let i=1;i<series.length;i++) ctx.lineTo(X(i),Y(series[i]));
+  ctx.strokeStyle=C.green; ctx.lineWidth=1.6; ctx.shadowColor=hexA(C.green,0.65); ctx.shadowBlur=8; ctx.stroke(); ctx.shadowBlur=0;
+  glowDot(ctx,X(series.length-1),Y(series[series.length-1]),2.2,C.green,0.9);
+  const vols=m.volumes, vw=plotW/vols.length;
+  for(let i=0;i<vols.length;i++){
+    const bh=4+vols[i]*12;
+    ctx.fillStyle=hexA(i%3!==0?C.green:C.red,0.4);
+    ctx.fillRect(padL+i*vw,h-bh,Math.max(1,vw-1),bh);
+  }
+}
+
+function drawCycle(ctx,w,h,t,m){
+  ctx.clearRect(0,0,w,h); ctx.fillStyle='#06060c'; ctx.fillRect(0,0,w,h);
+  const series=m.cycleCandles;
+  const padL=6,padR=6,padT=8,padB=14;
+  const plotW=w-padL-padR, plotH=h-padT-padB;
+  let hi=-Infinity,lo=Infinity;
+  for(const c of series){ if(c.high>hi)hi=c.high; if(c.low<lo)lo=c.low; }
+  const span=(hi-lo)||1, cw=plotW/series.length, bodyW=Math.max(1.2,cw*0.55);
+  ctx.strokeStyle='rgba(255,255,255,.04)';
+  for(let i=1;i<4;i++){ const y=padT+(plotH*i)/4; ctx.beginPath(); ctx.moveTo(padL,y); ctx.lineTo(padL+plotW,y); ctx.stroke(); }
+  for(let i=0;i<series.length;i++){
+    const c=series[i]; const x=padL+i*cw+cw*0.5;
+    const yh=padT+(1-(c.high-lo)/span)*plotH, yl=padT+(1-(c.low-lo)/span)*plotH;
+    const yo=padT+(1-(c.open-lo)/span)*plotH, yc=padT+(1-(c.close-lo)/span)*plotH;
+    const up=c.close>=c.open; const col=up?C.green:C.red;
+    ctx.strokeStyle=hexA(col,0.8); ctx.beginPath(); ctx.moveTo(x,yh); ctx.lineTo(x,yl); ctx.stroke();
+    ctx.fillStyle=up?hexA(C.green,0.85):hexA(C.red,0.85);
+    ctx.fillRect(x-bodyW/2,Math.min(yo,yc),bodyW,Math.max(1,Math.abs(yc-yo)));
+  }
+  ctx.fillStyle=hexA(C.pink,0.9); ctx.fillRect(padL+plotW*0.62,padT,1,plotH);
+  const vols=m.cycleVolumes, vw=plotW/vols.length;
+  for(let i=0;i<vols.length;i++){
+    const bh=2+vols[i]*8;
+    ctx.fillStyle=hexA(i%3!==0?C.green:C.red,0.35);
+    ctx.fillRect(padL+i*vw,h-padB+3,Math.max(1,vw-1),bh);
+  }
+}
+
+function drawSpark(ctx,w,h,t,m){
+  ctx.clearRect(0,0,w,h);
+  const s=m.spark; if(s.length<2) return;
+  let hi=-Infinity,lo=Infinity;
+  for(const v of s){ if(v>hi)hi=v; if(v<lo)lo=v; }
+  const span=(hi-lo)||1;
+  ctx.beginPath();
+  for(let i=0;i<s.length;i++){
+    const x=(i/(s.length-1))*w;
+    const y=h-((s[i]-lo)/span)*(h-4)-2;
+    if(i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+  }
+  ctx.strokeStyle=C.cyan; ctx.lineWidth=1.3; ctx.shadowColor=hexA(C.cyan,0.7); ctx.shadowBlur=5; ctx.stroke(); ctx.shadowBlur=0;
+}
+
+/* ── feeds (pluggable) ─────────────────────────────────────── */
+function seedDemoFeeds(rng, now){
+  const asOf = now.toISOString();
+  return {
+    whale: {
+      as_of: asOf,
+      source: 'demo-seed',
+      rows: [
+        {k:'BTC net flow', v:(rng()*40-12).toFixed(1)+'M', dir: rng()>0.45?'up':'dn'},
+        {k:'ETH joint radar', v:(rng()*18-6).toFixed(1)+'M', dir: rng()>0.5?'up':'dn'},
+        {k:'鲸鱼集群命中', v:String(2+Math.floor(rng()*7)), dir:''},
+        {k:'narrative', v: pick(rng,['accumulation','distribution','neutral']), dir:''}
+      ]
+    },
+    coinank: {
+      as_of: asOf,
+      source: 'demo-seed · style=CoinAnk OI/funding/liq',
+      label: 'CoinAnk feed',
+      rows: [
+        {k:'BTC funding', v:(0.003+rng()*0.012).toFixed(4)+'%', dir: rng()>0.4?'up':'dn'},
+        {k:'BTC OI Δ 1h', v:((rng()-0.45)*3.2).toFixed(2)+'%', dir: rng()>0.5?'up':'dn'},
+        {k:'liq 1h L/S', v:(rng()*28).toFixed(1)+'M / '+(rng()*22).toFixed(1)+'M', dir:''},
+        {k:'long/short', v:(0.8+rng()*0.6).toFixed(2), dir:''}
+      ]
+    },
+    luxalgo: {
+      as_of: asOf,
+      source: 'demo-seed · eight-pane style',
+      symbols: [
+        {sym:'BTC', bias:pick(rng,['observe','long','observe']), ready:false, eight:true},
+        {sym:'ETH', bias:pick(rng,['long','observe','short']), ready:false, eight:true},
+        {sym:'SOL', bias:pick(rng,['observe','short']), ready:false, eight:true},
+        {sym:'HYPE', bias:pick(rng,['short','observe']), ready:false, eight:rng()>0.2}
+      ],
+      rows: [
+        {k:'BTC TrendStr', v:(40+rng()*40).toFixed(1)+'%', dir:''},
+        {k:'BTC Squeeze', v:(50+rng()*50).toFixed(1)+'%', dir:''},
+        {k:'trading_ready', v:'false', dir:'dn'},
+        {k:'model_review', v:pick(rng,['skipped_budget','pending','ok']), dir:''}
+      ]
+    },
+    apex: {
+      as_of: asOf,
+      source: 'demo-seed · Memory Fabric',
+      rows: [
+        {k:'stage', v:'G0/P1 Shadow', dir:''},
+        {k:'recall hits', v:String(Math.floor(rng()*6)), dir:''},
+        {k:'attribution', v:pick(rng,['coinank+lux','whale+scan','chief-only']), dir:''},
+        {k:'continuity', v:pick(rng,['nominal','stale_warn','ok']), dir: rng()>0.7?'dn':''}
+      ]
+    },
+    ticker: SYMS.slice(0,8).map(sym=>({
+      sym, px:(sym==='BTC'?81000:sym==='ETH'?4200:sym==='SOL'?180:1)+rng()*200,
+      chg:(rng()-0.48)*4
+    }))
+  };
+}
+
+function refreshDemoFeeds(feeds, rng, now){
+  const asOf=now.toISOString();
+  const jitter=rows=>{
+    for(const r of rows){
+      if(/funding|OI|flow|Trend|Squeeze|liq/.test(r.k) || /M$|%$/.test(String(r.v))){
+        // soft drift of numeric-looking values handled by reseed partials
+      }
+    }
+  };
+  // reseed lightly for live feel
+  const f=seedDemoFeeds(rng, now);
+  feeds.whale=f.whale; feeds.coinank=f.coinank; feeds.luxalgo=f.luxalgo; feeds.apex=f.apex;
+  // ticker continuous walk
+  for(const tk of feeds.ticker){
+    tk.chg = clamp(tk.chg+(rng()-0.5)*0.35, -5, 5);
+    tk.px = Math.max(0.01, tk.px * (1 + tk.chg*0.0008));
+  }
+  // absorb any external injects already present via API
+  return feeds;
+}
+
+/* Public feed API — inject real JSON later without rebuilding the HTML */
+window.WhaleTerminalFeeds = {
+  version: 1,
+  mode: 'demo',
+  _data: null,
+  get(){ return this._data; },
+  set(partial){
+    if(!this._data) return;
+    this.mode = 'injected';
+    for(const k of ['whale','coinank','luxalgo','apex','ticker']){
+      if(partial && partial[k]) this._data[k] = Object.assign({}, this._data[k], partial[k], {source: (partial[k].source||'injected')});
+    }
+    if(partial && partial.as_of){
+      for(const k of ['whale','coinank','luxalgo','apex']){
+        if(this._data[k]) this._data[k].as_of = partial.as_of;
+      }
+    }
+    document.getElementById('sim-flag').textContent = 'INJECTED · Research only';
+  },
+  resetDemo(rng, now){
+    this.mode='demo';
+    this._data = seedDemoFeeds(rng||createRng(1), now||new Date());
+    document.getElementById('sim-flag').textContent = 'SIM DEMO · Research only';
+  }
+};
+
+/* ── UI updates ────────────────────────────────────────────── */
+function renderFeedPanel(el, rows){
+  el.innerHTML = rows.map(r=>`<div class="row ${r.dir||''}"><span>${escapeHtml(r.k)}</span><b>${escapeHtml(String(r.v))}</b></div>`).join('');
+}
+function renderLuxChips(model){
+  const box=$('lux-chips');
+  const syms=model.feeds.luxalgo.symbols||[];
+  box.innerHTML = syms.map(s=>{
+    const cls = s.ready ? 'on' : 'off';
+    return `<span class="schip ${cls}">${escapeHtml(s.sym)}·${escapeHtml(s.bias)}${s.ready?'':' · !ready'}</span>`;
+  }).join('') + `<span class="schip warn">trading_ready=false</span>`;
+}
+function renderTicker(model){
+  const box=$('ticker-body');
+  box.innerHTML = model.feeds.ticker.map(t=>{
+    const cls=t.chg>=0?'u':'d';
+    const sign=t.chg>=0?'+':'';
+    return `<div class="tk"><span class="s">${escapeHtml(t.sym)}</span><span>${t.px.toFixed(t.px>100?1:4)}</span><span class="${cls}">${sign}${t.chg.toFixed(2)}%</span></div>`;
+  }).join('');
+}
+function renderAllFeeds(model){
+  const f=model.feeds;
+  renderFeedPanel($('feed-whale'), f.whale.rows);
+  renderFeedPanel($('feed-coinank'), f.coinank.rows);
+  renderFeedPanel($('feed-lux'), f.luxalgo.rows);
+  renderFeedPanel($('feed-apex'), f.apex.rows);
+  renderLuxChips(model);
+  renderTicker(model);
+  const now=new Date(model.epoch+model.clockMs);
+  $('meta-whale').textContent = `as_of ${fmtAsOf(new Date(f.whale.as_of||now))} · ${f.whale.source}`;
+  $('meta-coinank').textContent = `as_of ${fmtAsOf(new Date(f.coinank.as_of||now))} · ${f.coinank.label||'CoinAnk'} · ${f.coinank.source}`;
+  $('meta-lux').textContent = `as_of ${fmtAsOf(new Date(f.luxalgo.as_of||now))} · ${f.luxalgo.source}`;
+  $('meta-apex').textContent = `as_of ${fmtAsOf(new Date(f.apex.as_of||now))} · ${f.apex.source}`;
+}
+
+function updateClock(model){
+  const now=new Date(model.epoch+model.clockMs);
+  $('clock').innerHTML = `${fmtUTC(now)} UTC<br><span style="opacity:.85;font-size:9px">${fmtSH(now)} Asia/Shanghai</span>`;
+  $('eq-ts').textContent = fmtUTC(now);
+  return fmtUTC(now);
+}
+function updateStatus(model){
+  const m=model, rng=m.rng;
+  m.vals.scan=clamp(m.vals.scan+(rng()-0.5)*0.22,7.4,10.4);
+  m.vals.vet=clamp(m.vals.vet+(rng()-0.5)*0.16,1.4,3.6);
+  m.vals.focal=clamp(m.vals.focal+(rng()-0.48)*0.2,1.2,4.4);
+  m.vals.risk=clamp(m.vals.risk+(rng()-0.52)*0.18,4.1,9.2);
+  m.vals.files=Math.max(0.6,m.vals.files+(rng()-0.47)*0.06);
+  m.gauge=clamp(m.gauge+(rng()-0.5)*0.05,0.12,0.97);
+  $('v-scan').textContent=m.vals.scan.toFixed(2);
+  $('v-vet').textContent=m.vals.vet.toFixed(2);
+  $('v-focal').textContent=m.vals.focal.toFixed(2);
+  $('v-risk').textContent=m.vals.risk.toFixed(2);
+  $('v-risk-sub').textContent=Math.round(40+m.vals.risk*5)+'%';
+  $('v-files').textContent=m.vals.files.toFixed(2)+'M';
+  $('chim-bar').style.width=(38+m.vals.files*22).toFixed(0)+'%';
+  $('chief-size').textContent=(4+m.vals.files*2).toFixed(1)+'M';
+  $('v-crawl-sub').textContent=`queue ${1+Math.floor(rng()*5)} · depth ${2+Math.floor(rng()*4)}`;
+  $('chief-line1').textContent = pick(rng,[
+    '四席协同 · 数据够用',
+    '主观察: BTC 观望 / ETH 分歧',
+    'JEV 闸: research_only',
+    'CoinAnk+Lux 证据可归档'
+  ]);
+  $('chief-line2').textContent = pick(rng,[
+    'JEV: research_only',
+    'trading_ready=false',
+    'Memory Fabric: Shadow',
+    '缺周期字段已标注'
+  ]);
+}
+function updateEquityValue(model){
+  const target=model.equity[model.equity.length-1];
+  model.shown += (target-model.shown)*0.14;
+  $('eq-val').textContent=fmtMoney(model.shown);
+}
+function renderLog(model){
+  const lines=model.log.slice(-22);
+  $('log-body').innerHTML = lines.map(l=>
+    `<div class="ln ${l.kind}"><span class="t">${l.time}</span><span class="k">${escapeHtml(l.key)}</span>${escapeHtml(l.text)}</div>`
+  ).join('');
+  $('log-status').textContent=`RUN · ${model.log.length} entries · ${window.WhaleTerminalFeeds.mode}`;
+}
+function updateCycleSide(model){
+  $('cs-list').innerHTML = model.csRows.map(r=>
+    `<span class="${r.dir}"><span>${r.k}</span><b>${r.v}</b></span>`
+  ).join('');
+  $('cs-exp').textContent=model.exp.toFixed(1);
+  $('cyc-n').textContent=String(model.cycle);
+}
+
+/* ── boot ──────────────────────────────────────────────────── */
+function bootModel(){
+  const rng=createRng(20261018);
+  const epoch=Date.UTC(2026,9,18,12,37,48);
+  const model={
+    rng, epoch, clockMs:0,
+    wallCandles:makeCandles(rng,64,0.00914),
+    cycleCandles:makeCandles(rng,74,0.00421),
+    equity:makeEquity(rng,92,82400),
+    volumes:makeVolumes(rng,92),
+    cycleVolumes:makeVolumes(rng,74),
+    spark:makeEquity(rng,30,50),
+    constellation:makeConstellation(rng,52),
+    starSeeds: Array.from({length:48},()=>({
+      x:rng(), y:rng(), z:rng(), drift:(rng()-0.5)*0.02,
+      c: pick(rng,[C.cyan,C.violet,C.pink,C.green,'#ffffff'])
+    })),
+    log:[],
+    vals:{scan:8.79,vet:2.18,focal:2.67,risk:6.44,files:1.42},
+    gauge:0.62, shown:82400, cycle:12, exp:33.4,
+    csRows:[
+      {k:'PNL',v:'+1,284.20',dir:'up'},
+      {k:'WIN',v:'71.4%',dir:'up'},
+      {k:'FILL',v:'0.31%',dir:'dn'},
+      {k:'POS',v:'4 / 6',dir:''}
+    ],
+    feeds: null,
+    tickAcc:{candle:0,status:0,log:0,feeds:0}
+  };
+  for(let i=0;i<20;i++){
+    const d=new Date(epoch-(20-i)*17000);
+    model.log.push(makeLogLine(rng,fmtUTC(d)));
+  }
+  model.feeds = seedDemoFeeds(rng, new Date(epoch));
+  window.WhaleTerminalFeeds._data = model.feeds;
+  return model;
+}
+
+const app=$('app');
+function fitStage(){
+  const s=Math.min(window.innerWidth/DESIGN_W, window.innerHeight/DESIGN_H);
+  app.style.transform=`scale(${s})`;
+  return s;
+}
+function fitCanvas(cv){
+  const lw=cv.offsetWidth, lh=cv.offsetHeight;
+  if(!lw||!lh) return null;
+  const rect=cv.getBoundingClientRect();
+  const scale=rect.width/lw||1;
+  const dpr=window.devicePixelRatio||1;
+  const q=Math.min(3,Math.max(1,dpr*scale));
+  const w=Math.round(lw*q), h=Math.round(lh*q);
+  if(cv.width!==w||cv.height!==h){ cv.width=w; cv.height=h; }
+  const ctx=cv.getContext('2d');
+  ctx.setTransform(q,0,0,q,0,0);
+  return {ctx,w:lw,h:lh};
+}
+
+function stepModel(model, dt){
+  model.clockMs += dt;
+  const rng=model.rng;
+  while(model.tickAcc.candle <= model.clockMs){
+    model.tickAcc.candle += 700;
+    appendCandle(model.wallCandles,rng); if(model.wallCandles.length>70) model.wallCandles.shift();
+    appendCandle(model.cycleCandles,rng); if(model.cycleCandles.length>78) model.cycleCandles.shift();
+    appendEquity(model.equity,rng); if(model.equity.length>96) model.equity.shift();
+    appendVolume(model.volumes,rng); if(model.volumes.length>96) model.volumes.shift();
+    appendVolume(model.cycleVolumes,rng); if(model.cycleVolumes.length>78) model.cycleVolumes.shift();
+    model.spark.push(model.spark[model.spark.length-1]+(rng()-0.5)*3);
+    if(model.spark.length>30) model.spark.shift();
+    model.exp=clamp(model.exp+(rng()-0.5)*2.4,4,96);
+  }
+  while(model.tickAcc.status <= model.clockMs){
+    model.tickAcc.status += 1500;
+    updateStatus(model);
+    updateCycleSide(model);
+  }
+  while(model.tickAcc.log <= model.clockMs){
+    model.tickAcc.log += 1400 + rng()*1400;
+    const now=new Date(model.epoch+model.clockMs);
+    model.log.push(makeLogLine(rng,fmtUTC(now)));
+    if(model.log.length>280) model.log.shift();
+    renderLog(model);
+  }
+  // four-seat feeds refresh ~1.5s
+  while(model.tickAcc.feeds <= model.clockMs){
+    model.tickAcc.feeds += 1500;
+    if(window.WhaleTerminalFeeds.mode==='demo'){
+      refreshDemoFeeds(model.feeds, rng, new Date(model.epoch+model.clockMs));
+      window.WhaleTerminalFeeds._data = model.feeds;
+    }
+    renderAllFeeds(model);
+  }
+  updateClock(model);
+  updateEquityValue(model);
+}
+
+const canvases={
+  arena:$('c-arena'), equity:$('c-equity'), cycle:$('c-cycle'), spark:$('c-spark')
+};
+function render(model,t){
+  const a=fitCanvas(canvases.arena); if(a) drawArena(a.ctx,a.w,a.h, reduceMotion?0:t, model);
+  const e=fitCanvas(canvases.equity); if(e) drawEquity(e.ctx,e.w,e.h,t,model);
+  const c=fitCanvas(canvases.cycle); if(c) drawCycle(c.ctx,c.w,c.h,t,model);
+  const s=fitCanvas(canvases.spark); if(s) drawSpark(s.ctx,s.w,s.h,t,model);
+}
+
+function main(){
+  const model=bootModel();
+  fitStage();
+  updateStatus(model); updateCycleSide(model); renderLog(model);
+  updateClock(model); updateEquityValue(model); renderAllFeeds(model);
+
+  const t0=performance.now(); let last=t0;
+  function frame(now){
+    const t=(now-t0)/1000;
+    const dt=Math.min(120, now-last); last=now;
+    if(!reduceMotion){
+      stepModel(model, dt);
+      render(model, t);
+      requestAnimationFrame(frame);
+    }
+  }
+  if(reduceMotion){
+    stepModel(model,0); render(model,0);
+    // slow status refresh only
+    setInterval(()=>{
+      stepModel(model, 400);
+      render(model, 0);
+    }, 2000);
+  } else {
+    requestAnimationFrame(frame);
+  }
+
+  window.addEventListener('resize',()=>{ fitStage(); render(model,(performance.now()-t0)/1000); });
+
+  $('topnav').addEventListener('click', e=>{
+    const sp=e.target.closest('span[data-nav]'); if(!sp) return;
+    $('topnav').querySelectorAll('span').forEach(s=>s.classList.remove('on'));
+    sp.classList.add('on');
+  });
+
+  $('scan-btn').addEventListener('click',()=>{
+    const now=new Date(model.epoch+model.clockMs);
+    $('log-status').textContent='SCANNING…';
+    const burst=[
+      {k:'SCAN',c:'info',t:'burst scan across 4 seats'},
+      {k:'鲸',c:'pink',t:'whale radar spike on BTC cluster'},
+      {k:'COINANK',c:'info',t:'funding/OI snapshot refreshed (sim)'},
+      {k:'LUX',c:'ok',t:'八面板 chips revalidated · trading_ready=false'},
+      {k:'APEX',c:'warn',t:'Memory Fabric attribution pass'},
+      {k:'VET',c:'ok',t:'liquidity vitals within band'},
+      {k:'FOCAL',c:'pink',t:'focus score spike +0.4'},
+      {k:'RISK',c:'warn',t:'soft cap check — research only'}
+    ];
+    for(let i=0;i<burst.length;i++){
+      const d=new Date(now.getTime()+i*180);
+      model.log.push({time:fmtUTC(d), kind:burst[i].c, key:burst[i].k, text:burst[i].t});
+    }
+    model.vals.scan=clamp(model.vals.scan+1.2,7.4,10.4);
+    model.vals.focal=clamp(model.vals.focal+0.5,1.2,4.4);
+    model.vals.risk=clamp(model.vals.risk+0.4,4.1,9.2);
+    model.cycle+=1; model.exp=Math.min(96,model.exp+4);
+    if(window.WhaleTerminalFeeds.mode==='demo'){
+      refreshDemoFeeds(model.feeds, model.rng, now);
+    }
+    updateStatus(model); updateCycleSide(model); renderLog(model); renderAllFeeds(model);
+    setTimeout(()=>{ $('log-status').textContent=`RUN · ${model.log.length} entries · ${window.WhaleTerminalFeeds.mode}`; }, 700);
+  });
+}
+main();
+})();
+</script>
+
+<script id="whale-bootstrap-feeds" type="application/json">
+{
+  "as_of": "2026-10-17T23:31:23.976820Z",
+  "mode_note": "bootstrapped from pdpd Obsidian 23Z archives; live panels still animate from anchors",
+  "whale": {
+    "source": "shared_journal via 鲸鱼 2026-10-17T16Z",
+    "as_of": "2026-10-17T16:53:00Z",
+    "rows": [
+      {
+        "k": "进出金窗",
+        "v": "空窗（15:17–16:25Z 核验）",
+        "dir": ""
+      },
+      {
+        "k": "whale_alert",
+        "v": "0",
+        "dir": ""
+      },
+      {
+        "k": "arkham",
+        "v": "0",
+        "dir": ""
+      },
+      {
+        "k": "发现 since_id",
+        "v": "2111294214189539502",
+        "dir": ""
+      },
+      {
+        "k": "本轮新帖",
+        "v": "0 · 静默",
+        "dir": ""
+      }
+    ]
+  },
+  "coinank": {
+    "label": "CoinAnk feed",
+    "source": "Z:\\Obsiaidn\\APEX\\APEX\\Grok-Research\\coinank\\Reports\\20261017T23Z-coinank-7f1e7ab4.md",
+    "as_of": "2026-10-17T23:31:23.976820Z",
+    "report_id": "20261017T23Z-coinank-7f1e7ab4",
+    "analysis_status": "partial",
+    "rows": [
+      {
+        "k": "BTC OI",
+        "v": "94,340.84",
+        "dir": "up"
+      },
+      {
+        "k": "BTC 费率",
+        "v": "4.99e-05",
+        "dir": "up"
+      },
+      {
+        "k": "BTC LSR",
+        "v": "1.744",
+        "dir": ""
+      },
+      {
+        "k": "ETH OI",
+        "v": "2,260,971.37",
+        "dir": "up"
+      },
+      {
+        "k": "ETH 费率",
+        "v": "4.486e-05",
+        "dir": "up"
+      },
+      {
+        "k": "ETH LSR",
+        "v": "3.07",
+        "dir": ""
+      },
+      {
+        "k": "SOL OI",
+        "v": "8,779,086.55",
+        "dir": "up"
+      },
+      {
+        "k": "SOL 费率",
+        "v": "-4.435e-05",
+        "dir": "dn"
+      },
+      {
+        "k": "SOL LSR",
+        "v": "2.586",
+        "dir": ""
+      },
+      {
+        "k": "BNB OI",
+        "v": "563,116.18",
+        "dir": "up"
+      },
+      {
+        "k": "BNB 费率",
+        "v": "0",
+        "dir": ""
+      },
+      {
+        "k": "BNB LSR",
+        "v": "2.51",
+        "dir": ""
+      }
+    ]
+  },
+  "luxalgo": {
+    "source": "Z:\\Obsiaidn\\APEX\\APEX\\Grok-Research\\luxalgo\\Reviews\\luxalgo-eight-four-review-hourly-20261017T23Z\\strategy-scenarios-hourly-20261018T070747+0800.md",
+    "as_of": "2026-10-17T23:00:00Z",
+    "symbols": [
+      "BTC",
+      "ETH",
+      "SOL"
+    ],
+    "rows": [
+      {
+        "k": "trading_ready",
+        "v": "false",
+        "dir": "dn"
+      },
+      {
+        "k": "archive",
+        "v": "20261017T23Z",
+        "dir": ""
+      },
+      {
+        "k": "strategy",
+        "v": "20261018T070747+0800",
+        "dir": ""
+      },
+      {
+        "k": "pane_hint",
+        "v": "见 manifest",
+        "dir": ""
+      },
+      {
+        "k": "model",
+        "v": "model_review: skipped_budget",
+        "dir": ""
+      }
+    ]
+  },
+  "apex": {
+    "source": "APEX Financial Memory Fabric + apex-whale-terminal skill",
+    "as_of": "2026-10-18T00:00:00Z",
+    "rows": [
+      {
+        "k": "Memory Fabric",
+        "v": "G0/P1 只读",
+        "dir": ""
+      },
+      {
+        "k": "truth_plane",
+        "v": "研报/快照唯一",
+        "dir": ""
+      },
+      {
+        "k": "assist",
+        "v": "未批准",
+        "dir": ""
+      },
+      {
+        "k": "joint",
+        "v": "coinank+luxalgo 归档可挂",
+        "dir": ""
+      },
+      {
+        "k": "do_not_overwrite",
+        "v": "true",
+        "dir": ""
+      }
+    ]
+  },
+  "ticker": [
+    {
+      "sym": "BTC",
+      "px": 81519,
+      "chg": 0.034,
+      "note": "archive-anchor"
+    },
+    {
+      "sym": "ETH",
+      "px": 2980,
+      "chg": 0.033,
+      "note": "archive-anchor"
+    },
+    {
+      "sym": "SOL",
+      "px": 142.5,
+      "chg": 0.039,
+      "note": "archive-anchor"
+    },
+    {
+      "sym": "BNB",
+      "px": 610,
+      "chg": 0.005,
+      "note": "archive-anchor"
+    },
+    {
+      "sym": "XRP",
+      "px": 0.54,
+      "chg": 0.032,
+      "note": "archive-anchor"
+    }
+  ]
+}
+</script>
+<script>
+(function(){
+  function applyBootstrap(){
+    try{
+      var el=document.getElementById('whale-bootstrap-feeds');
+      if(!el||!window.WhaleTerminalFeeds) return;
+      var data=JSON.parse(el.textContent);
+      window.WhaleTerminalFeeds.set(data);
+      // keep soft demo drift ON TOP of archive anchors
+      window.WhaleTerminalFeeds.mode='archive+demo';
+      var meta=document.getElementById('banner-sub')||document.querySelector('.banner span');
+      if(meta) meta.textContent='Whale · CoinAnk · LuxAlgo · APEX · bootstrapped 20261017T23Z archive';
+    }catch(e){ console.warn('bootstrap feeds', e); }
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', function(){ setTimeout(applyBootstrap, 50); });
+  else setTimeout(applyBootstrap, 50);
+})();
+</script>
+
+</body>
+</html>
